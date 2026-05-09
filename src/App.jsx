@@ -2,6 +2,17 @@ import { useState, useEffect } from "react";
 // Button replaced with native elements
 import { motion, AnimatePresence } from "framer-motion";
 
+/* Safe localStorage — works on server (Vercel SSR) and client */
+const ls = {
+  get: (key, fallback = null) => {
+    try { const v = localStorage.getItem(key); return v !== null ? v : fallback; }
+    catch { return fallback; }
+  },
+  set: (key, val) => { try { localStorage.setItem(key, val); } catch {} },
+  remove: (key) => { try { localStorage.removeItem(key); } catch {} },
+};
+
+
 /* ============================================================
    SATURN ROBOTICS — Full Course App
    Screens: landing → signup → onboarding → dashboard → courses
@@ -83,28 +94,28 @@ function getRecommendations(answers) {
 
 export default function App() {
   const [screen, setScreen] = useState(() => {
-    const user = localStorage.getItem("saturn_user");
-    return user ? "dashboard" : "landing";
+    try { const user = ls.get("saturn_user"); return user ? "dashboard" : "landing"; }
+    catch { return "landing"; }
   });
   const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem("saturn_user");
-    return saved ? JSON.parse(saved) : null;
+    try { const saved = ls.get("saturn_user"); return saved ? JSON.parse(saved) : null; }
+    catch { return null; }
   });
   const [addedCourses, setAddedCourses] = useState(() => {
-    const saved = localStorage.getItem("saturn_courses");
-    return saved ? JSON.parse(saved) : [];
+    try { const saved = ls.get("saturn_courses"); return saved ? JSON.parse(saved) : []; }
+    catch { return []; }
   });
   const [onboardAnswers, setOnboardAnswers] = useState({});
   const [onboardStep, setOnboardStep] = useState(0);
   const [showAddModal, setShowAddModal] = useState(false);
   const [currentLesson, setCurrentLesson] = useState(null);
   const [unlocked, setUnlocked] = useState(() => {
-    const saved = localStorage.getItem("unlockedLessons");
-    return saved ? Number(saved) : 1;
+    try { const saved = ls.get("unlockedLessons"); return saved ? Number(saved) : 1; }
+    catch { return 1; }
   });
 
-  useEffect(() => { localStorage.setItem("unlockedLessons", unlocked); }, [unlocked]);
-  useEffect(() => { localStorage.setItem("saturn_courses", JSON.stringify(addedCourses)); }, [addedCourses]);
+  useEffect(() => { ls.set("unlockedLessons", unlocked); }, [unlocked]);
+  useEffect(() => { ls.set("saturn_courses", JSON.stringify(addedCourses)); }, [addedCourses]);
 
   const arduinoLessons = [
     { id: 1, title: "Ardui-What?!" },
@@ -118,7 +129,7 @@ export default function App() {
 
   const handleSignup = (userData) => {
     setUser(userData);
-    localStorage.setItem("saturn_user", JSON.stringify(userData));
+    ls.set("saturn_user", JSON.stringify(userData));
     setScreen("onboarding");
   };
 
@@ -144,7 +155,7 @@ export default function App() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("saturn_user");
+    ls.remove("saturn_user");
     setUser(null);
     setScreen("landing");
     setAddedCourses([]);
@@ -156,7 +167,7 @@ export default function App() {
 
   if (screen === "landing") return <LandingScreen onSignup={() => setScreen("signup")} onLogin={() => setScreen("login")} />;
   if (screen === "signup") return <SignupScreen onSubmit={handleSignup} onBack={() => setScreen("landing")} />;
-  if (screen === "login") return <LoginScreen onSubmit={(u) => { setUser(u); localStorage.setItem("saturn_user", JSON.stringify(u)); setScreen("dashboard"); }} onBack={() => setScreen("landing")} />;
+  if (screen === "login") return <LoginScreen onSubmit={(u) => { setUser(u); ls.set("saturn_user", JSON.stringify(u)); setScreen("dashboard"); }} onBack={() => setScreen("landing")} />;
   if (screen === "onboarding") return <OnboardingScreen questions={ONBOARDING_QUESTIONS} step={onboardStep} onAnswer={handleOnboardAnswer} userName={user?.name} />;
   if (screen === "recommendations") return (
     <RecommendationsScreen
@@ -818,7 +829,7 @@ function ESP32PathScreen({ setScreen, onBack }) {
 function TeensyPathScreen({ setScreen, onBack }) {
   const [lessonId, setLessonId] = useState(null);
   const [unlockedTeensy, setUnlockedTeensy] = useState(() =>
-    parseInt(localStorage.getItem("teensy_unlocked") || "1")
+    (() => { try { return parseInt(ls.get("teensy_unlocked") || "1"); } catch { return 1; } })()
   );
 
   const teensyLessons = [
@@ -884,7 +895,7 @@ function TeensyPathScreen({ setScreen, onBack }) {
           if (lessonId === unlockedTeensy) {
             const next = unlockedTeensy + 1;
             setUnlockedTeensy(next);
-            localStorage.setItem("teensy_unlocked", next);
+            ls.set("teensy_unlocked", next);
           }
           setLessonId(null);
         }}
@@ -1402,7 +1413,7 @@ function WiresInteractive() {
 function MotorsPathScreen({ setScreen, onBack }) {
   const [lessonId, setLessonId] = useState(null);
   const [unlockedMotors, setUnlockedMotors] = useState(() =>
-    parseInt(localStorage.getItem("motors_unlocked") || "1")
+    (() => { try { return parseInt(ls.get("motors_unlocked") || "1"); } catch { return 1; } })()
   );
 
   const ACCENT = "#2ECC71";
@@ -1528,7 +1539,7 @@ function MotorsPathScreen({ setScreen, onBack }) {
           if (lessonId === unlockedMotors) {
             const next = unlockedMotors + 1;
             setUnlockedMotors(next);
-            localStorage.setItem("motors_unlocked", next);
+            ls.set("motors_unlocked", next);
           }
           setLessonId(null);
         }}

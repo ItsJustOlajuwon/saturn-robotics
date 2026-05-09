@@ -767,7 +767,7 @@ function ESP32PathScreen({ setScreen, onBack }) {
     },
   ];
 
-  const selected = esp32Lessons.find((l) => l.id === lessonId);
+  const selected = teensyLessons.find((l) => l.id === lessonId);
 
   if (lessonId !== null) {
     return (

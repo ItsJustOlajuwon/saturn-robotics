@@ -1,96 +1,15 @@
 import { useState, useEffect } from "react";
 // Button replaced with native elements
 import { motion, AnimatePresence } from "framer-motion";
-
-/* Safe localStorage — works on server (Vercel SSR) and client */
-const ls = {
-  get: (key, fallback = null) => {
-    try { const v = localStorage.getItem(key); return v !== null ? v : fallback; }
-    catch { return fallback; }
-  },
-  set: (key, val) => { try { localStorage.setItem(key, val); } catch {} },
-  remove: (key) => { try { localStorage.removeItem(key); } catch {} },
-};
-
+import { ls } from "./utils/localStorage";
+import { getRecommendations } from "./utils/recommendations";
+import { ALL_COURSES } from "./data/courses";
+import { ONBOARDING_QUESTIONS } from "./data/onboarding";
 
 /* ============================================================
    SATURN ROBOTICS — Full Course App
    Screens: landing → signup → onboarding → dashboard → courses
    ============================================================ */
-
-const ALL_COURSES = [
-  { id: "arduino", title: "Arduino Basics", emoji: "🤖", bg: "#6C4DFF", accent: "#6C4DFF", tag: "START HERE",
-    desc: "Perfect starting point. Learn the fundamentals of microcontrollers with the world's most beginner-friendly board." },
-  { id: "esp32",   title: "ESP32",           emoji: "📡", bg: "#111111", accent: "#F2C94C", tag: "INTERMEDIATE",
-    desc: "Take your builds wireless. WiFi, Bluetooth, and IoT on a fast dual-core chip." },
-  { id: "teensy",  title: "Teensy 4.1",      emoji: "⚡", bg: "#1A1A2E", accent: "#E0AA3E", tag: "ADVANCED",
-    desc: "600 MHz ARM powerhouse. Real-time audio, high-speed USB, and serious robotics." },
-  { id: "motors",  title: "Motors & Actuators", emoji: "⚙️", bg: "#0F4C35", accent: "#2ECC71", tag: "HANDS-ON",
-    desc: "Make things move. Servos, DC motors, steppers, actuators — the muscles of any robot." },
-];
-
-const ONBOARDING_QUESTIONS = [
-  {
-    id: "experience",
-    question: "How much experience do you have with electronics?",
-    options: [
-      { label: "Total beginner 🌱", value: "beginner" },
-      { label: "I've done a few projects", value: "some" },
-      { label: "Comfortable with Arduino", value: "arduino" },
-      { label: "Pretty experienced", value: "advanced" },
-    ],
-  },
-  {
-    id: "goal",
-    question: "What do you want to build?",
-    options: [
-      { label: "Robots & automation 🤖", value: "robots" },
-      { label: "Smart home / IoT 🏠", value: "iot" },
-      { label: "Drones & RC vehicles 🚁", value: "drones" },
-      { label: "Not sure yet, just exploring", value: "explore" },
-    ],
-  },
-  {
-    id: "board",
-    question: "Do you already own a board?",
-    options: [
-      { label: "Arduino Uno / Nano", value: "arduino" },
-      { label: "ESP32", value: "esp32" },
-      { label: "Teensy", value: "teensy" },
-      { label: "I don't have one yet", value: "none" },
-    ],
-  },
-  {
-    id: "time",
-    question: "How much time can you dedicate per week?",
-    options: [
-      { label: "Just 15–30 mins", value: "casual" },
-      { label: "About an hour", value: "regular" },
-      { label: "A few hours", value: "dedicated" },
-      { label: "As much as it takes 🔥", value: "intense" },
-    ],
-  },
-];
-
-function getRecommendations(answers) {
-  const recommended = new Set();
-  const { experience, goal, board } = answers;
-
-  if (experience === "beginner" || experience === "some") recommended.add("arduino");
-  if (experience === "arduino" || experience === "advanced") {
-    recommended.add("esp32");
-    recommended.add("motors");
-  }
-  if (experience === "advanced") recommended.add("teensy");
-  if (goal === "iot") recommended.add("esp32");
-  if (goal === "robots" || goal === "drones") { recommended.add("motors"); recommended.add("arduino"); }
-  if (board === "arduino") recommended.add("arduino");
-  if (board === "esp32") recommended.add("esp32");
-  if (board === "teensy") recommended.add("teensy");
-  if (board === "none" || experience === "beginner") recommended.add("arduino");
-
-  return [...recommended];
-}
 
 export default function App() {
   const [screen, setScreen] = useState(() => {
@@ -224,7 +143,7 @@ export default function App() {
    LANDING SCREEN
    ============================================================ */
 
-function LandingScreen({ onSignup, onLogin }) {
+export function LandingScreen({ onSignup, onLogin }) {
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center px-6 py-16 relative overflow-hidden">
       {/* Subtle grid bg */}
@@ -280,7 +199,7 @@ function LandingScreen({ onSignup, onLogin }) {
    SIGNUP SCREEN
    ============================================================ */
 
-function SignupScreen({ onSubmit, onBack }) {
+export function SignupScreen({ onSubmit, onBack }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
@@ -343,7 +262,7 @@ function SignupScreen({ onSubmit, onBack }) {
    LOGIN SCREEN
    ============================================================ */
 
-function LoginScreen({ onSubmit, onBack }) {
+export function LoginScreen({ onSubmit, onBack }) {
   const [email, setEmail] = useState("");
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center px-6">
@@ -376,7 +295,7 @@ function LoginScreen({ onSubmit, onBack }) {
    ONBOARDING QUIZ SCREEN
    ============================================================ */
 
-function OnboardingScreen({ questions, step, onAnswer, userName }) {
+export function OnboardingScreen({ questions, step, onAnswer, userName }) {
   const q = questions[step];
   const progress = ((step) / questions.length) * 100;
 
@@ -418,7 +337,7 @@ function OnboardingScreen({ questions, step, onAnswer, userName }) {
    RECOMMENDATIONS SCREEN
    ============================================================ */
 
-function RecommendationsScreen({ recommendations, allCourses, addedCourses, onAdd, onRemove, onDone }) {
+export function RecommendationsScreen({ recommendations, allCourses, addedCourses, onAdd, onRemove, onDone }) {
   const recommended = allCourses.filter(c => recommendations.includes(c.id));
   const rest = allCourses.filter(c => !recommendations.includes(c.id));
 
@@ -462,7 +381,7 @@ function RecommendationsScreen({ recommendations, allCourses, addedCourses, onAd
   );
 }
 
-function CourseAddCard({ course: c, added, onAdd, onRemove, delay = 0, recommended, dark = true }) {
+export function CourseAddCard({ course: c, added, onAdd, onRemove, delay = 0, recommended, dark = true }) {
   const titleColor = dark ? "#fff" : "#111827";
   const descColor  = dark ? "rgba(255,255,255,0.45)" : "#6b7280";
   const borderColor = added ? c.accent : dark ? "rgba(255,255,255,0.12)" : "#e5e7eb";
@@ -501,7 +420,7 @@ function CourseAddCard({ course: c, added, onAdd, onRemove, delay = 0, recommend
    DASHBOARD SCREEN
    ============================================================ */
 
-function DashboardScreen({ user, addedCourses, allCourses, onOpenCourse, onAddCourse, onRemoveCourse, onLogout }) {
+export function DashboardScreen({ user, addedCourses, allCourses, onOpenCourse, onAddCourse, onRemoveCourse, onLogout }) {
   const [showAdd, setShowAdd] = useState(false);
   const myCourses = allCourses.filter(c => addedCourses.includes(c.id));
   const available = allCourses.filter(c => !addedCourses.includes(c.id));
@@ -1262,7 +1181,7 @@ function CenterCard({ title, titleColor = "#111827", children, style = {}, accen
    ARDUINO LESSON FLOW (preserves original structure)
    ============================================================ */
 
-function LessonFlow({ lessonId, lessons, finishLesson, goPath, goNext }) {
+export function LessonFlow({ lessonId, lessons, finishLesson, goPath, goNext }) {
   const lessonMap = {
     1: LessonArduino,
     2: LessonLED,
@@ -1898,7 +1817,7 @@ function SortingArmInteractive({ accentColor, darkBg }) {
    COMPLETION SCREEN
    ============================================================ */
 
-function Completion({ goPath, goNext, hasNext, accentColor = "#6C4DFF" }) {
+export function Completion({ goPath, goNext, hasNext, accentColor = "#6C4DFF" }) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-white">
       <div style={{ padding: "32px", textAlign: "center", border: `4px solid ${accentColor}`, maxWidth: "360px", width: "100%", borderRadius: "16px", background: "#fff" }}>

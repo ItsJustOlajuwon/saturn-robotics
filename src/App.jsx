@@ -10,6 +10,18 @@ const ls = {
   },
   set: (key, val) => { try { localStorage.setItem(key, val); } catch {} },
   remove: (key) => { try { localStorage.removeItem(key); } catch {} },
+  getJSON: (key, fallback = null) => {
+    try {
+      const raw = localStorage.getItem(key);
+      if (raw === null) return fallback;
+      const parsed = JSON.parse(raw);
+      if (parsed === null || typeof parsed !== "object") return fallback;
+      return parsed;
+    } catch {
+      localStorage.removeItem(key);
+      return fallback;
+    }
+  },
 };
 
 
@@ -94,16 +106,13 @@ function getRecommendations(answers) {
 
 export default function App() {
   const [screen, setScreen] = useState(() => {
-    try { const user = ls.get("saturn_user"); return user ? "dashboard" : "landing"; }
-    catch { return "landing"; }
+    const user = ls.getJSON("saturn_user");
+    return user ? "dashboard" : "landing";
   });
-  const [user, setUser] = useState(() => {
-    try { const saved = ls.get("saturn_user"); return saved ? JSON.parse(saved) : null; }
-    catch { return null; }
-  });
+  const [user, setUser] = useState(() => ls.getJSON("saturn_user"));
   const [addedCourses, setAddedCourses] = useState(() => {
-    try { const saved = ls.get("saturn_courses"); return saved ? JSON.parse(saved) : []; }
-    catch { return []; }
+    const saved = ls.getJSON("saturn_courses");
+    return Array.isArray(saved) ? saved : [];
   });
   const [onboardAnswers, setOnboardAnswers] = useState({});
   const [onboardStep, setOnboardStep] = useState(0);
@@ -287,8 +296,10 @@ function SignupScreen({ onSubmit, onBack }) {
 
   const submit = () => {
     if (!name.trim()) return setError("What should we call you?");
-    if (!email.trim() || !email.includes("@")) return setError("Enter a valid email.");
-    onSubmit({ name: name.trim(), email: email.trim() });
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail))
+      return setError("Enter a valid email.");
+    onSubmit({ name: name.trim(), email: trimmedEmail });
   };
 
   return (
@@ -767,7 +778,7 @@ function ESP32PathScreen({ setScreen, onBack }) {
     },
   ];
 
-  const selected = teensyLessons.find((l) => l.id === lessonId);
+  const selected = esp32Lessons.find((l) => l.id === lessonId);
 
   if (lessonId !== null) {
     return (

@@ -1,16 +1,11 @@
 import { useState, useEffect } from "react";
-// Button replaced with native elements
 import { motion, AnimatePresence } from "framer-motion";
-
-/* Safe localStorage — works on server (Vercel SSR) and client */
-const ls = {
-  get: (key, fallback = null) => {
-    try { const v = localStorage.getItem(key); return v !== null ? v : fallback; }
-    catch { return fallback; }
-  },
-  set: (key, val) => { try { localStorage.setItem(key, val); } catch {} },
-  remove: (key) => { try { localStorage.removeItem(key); } catch {} },
-};
+import { ls } from "./utils/storage";
+import { BackButton } from "./components/ui/BackButton";
+import { PrimaryButton } from "./components/ui/PrimaryButton";
+import { DarkInput } from "./components/ui/DarkInput";
+import { AuthLayout } from "./components/ui/AuthLayout";
+import { CoursePathScreen } from "./components/CoursePathScreen";
 
 
 /* ============================================================
@@ -201,9 +196,9 @@ export default function App() {
     <PathScreen lessons={arduinoLessons} unlocked={unlocked} openLesson={openLesson}
       title="Arduino Basics 🤖" accentColor="#6C4DFF" onBack={() => setScreen("dashboard")} />
   );
-  if (screen === "esp32Path") return <ESP32PathScreen setScreen={setScreen} onBack={() => setScreen("dashboard")} />;
-  if (screen === "teensyPath") return <TeensyPathScreen setScreen={setScreen} onBack={() => setScreen("dashboard")} />;
-  if (screen === "motorsPath") return <MotorsPathScreen setScreen={setScreen} onBack={() => setScreen("dashboard")} />;
+  if (screen === "esp32Path") return <ESP32PathScreen onBack={() => setScreen("dashboard")} />;
+  if (screen === "teensyPath") return <TeensyPathScreen onBack={() => setScreen("dashboard")} />;
+  if (screen === "motorsPath") return <MotorsPathScreen onBack={() => setScreen("dashboard")} />;
 
   if (screen === "complete") return (
     <Completion goPath={() => setScreen("arduinoPath")} goNext={() => setScreen("arduinoPath")} hasNext={false} accentColor="#6C4DFF" />
@@ -292,50 +287,40 @@ function SignupScreen({ onSubmit, onBack }) {
   };
 
   return (
-    <div className="min-h-screen bg-black flex flex-col items-center justify-center px-6">
-      <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-sm">
-        <button onClick={onBack} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.4)", cursor: "pointer", fontSize: "13px", marginBottom: "2rem", padding: 0 }}>← Back</button>
-        <div style={{ textAlign: "center", marginBottom: "2rem" }}>
-          <span style={{ fontSize: "2rem" }}>🪐</span>
-          <h2 style={{ fontSize: "22px", fontWeight: 700, color: "#fff", marginTop: "8px" }}>Create your account</h2>
-          <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)", marginTop: "4px" }}>Free forever. No credit card needed.</p>
-        </div>
+    <AuthLayout onBack={onBack}>
+      <div style={{ textAlign: "center", marginBottom: "2rem" }}>
+        <span style={{ fontSize: "2rem" }}>🪐</span>
+        <h2 style={{ fontSize: "22px", fontWeight: 700, color: "#fff", marginTop: "8px" }}>Create your account</h2>
+        <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)", marginTop: "4px" }}>Free forever. No credit card needed.</p>
+      </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-          <div>
-            <label style={{ fontSize: "12px", color: "rgba(255,255,255,0.5)", display: "block", marginBottom: "6px" }}>Your name</label>
-            <input
-              value={name} onChange={e => { setName(e.target.value); setError(""); }}
-              placeholder="e.g. Alex"
-              style={{ width: "100%", padding: "12px 14px", borderRadius: "10px", border: "1.5px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.06)", color: "#fff", fontSize: "14px", outline: "none" }}
-              onKeyDown={e => e.key === "Enter" && submit()}
-            />
-          </div>
-          <div>
-            <label style={{ fontSize: "12px", color: "rgba(255,255,255,0.5)", display: "block", marginBottom: "6px" }}>Email</label>
-            <input
-              type="email" value={email} onChange={e => { setEmail(e.target.value); setError(""); }}
-              placeholder="you@example.com"
-              style={{ width: "100%", padding: "12px 14px", borderRadius: "10px", border: "1.5px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.06)", color: "#fff", fontSize: "14px", outline: "none" }}
-              onKeyDown={e => e.key === "Enter" && submit()}
-            />
-          </div>
-          {error && <p style={{ fontSize: "12px", color: "#f87171" }}>{error}</p>}
-          <motion.button
-            whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-            onClick={submit}
-            style={{ background: "#6C4DFF", color: "#fff", border: "none", padding: "13px", borderRadius: "10px", fontSize: "15px", fontWeight: 600, cursor: "pointer", marginTop: "4px" }}
-          >
-            Create account →
-          </motion.button>
-        </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+        <DarkInput
+          label="Your name"
+          value={name}
+          onChange={e => { setName(e.target.value); setError(""); }}
+          placeholder="e.g. Alex"
+          onKeyDown={e => e.key === "Enter" && submit()}
+        />
+        <DarkInput
+          label="Email"
+          type="email"
+          value={email}
+          onChange={e => { setEmail(e.target.value); setError(""); }}
+          placeholder="you@example.com"
+          onKeyDown={e => e.key === "Enter" && submit()}
+        />
+        {error && <p style={{ fontSize: "12px", color: "#f87171" }}>{error}</p>}
+        <PrimaryButton onClick={submit} style={{ marginTop: "4px", padding: "13px", fontSize: "15px" }}>
+          Create account →
+        </PrimaryButton>
+      </div>
 
-        <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.25)", textAlign: "center", marginTop: "1.5rem" }}>
-          Already have an account?{" "}
-          <button onClick={onBack} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.5)", cursor: "pointer", fontSize: "12px", textDecoration: "underline" }}>Log in</button>
-        </p>
-      </motion.div>
-    </div>
+      <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.25)", textAlign: "center", marginTop: "1.5rem" }}>
+        Already have an account?{" "}
+        <button onClick={onBack} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.5)", cursor: "pointer", fontSize: "12px", textDecoration: "underline" }}>Log in</button>
+      </p>
+    </AuthLayout>
   );
 }
 
@@ -346,29 +331,26 @@ function SignupScreen({ onSubmit, onBack }) {
 function LoginScreen({ onSubmit, onBack }) {
   const [email, setEmail] = useState("");
   return (
-    <div className="min-h-screen bg-black flex flex-col items-center justify-center px-6">
-      <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-sm">
-        <button onClick={onBack} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.4)", cursor: "pointer", fontSize: "13px", marginBottom: "2rem", padding: 0 }}>← Back</button>
-        <div style={{ textAlign: "center", marginBottom: "2rem" }}>
-          <span style={{ fontSize: "2rem" }}>🪐</span>
-          <h2 style={{ fontSize: "22px", fontWeight: 700, color: "#fff", marginTop: "8px" }}>Welcome back</h2>
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-          <input
-            type="email" value={email} onChange={e => setEmail(e.target.value)}
-            placeholder="your@email.com"
-            style={{ width: "100%", padding: "12px 14px", borderRadius: "10px", border: "1.5px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.06)", color: "#fff", fontSize: "14px", outline: "none" }}
-          />
-          <motion.button
-            whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-            onClick={() => email && onSubmit({ name: email.split("@")[0], email })}
-            style={{ background: "#6C4DFF", color: "#fff", border: "none", padding: "13px", borderRadius: "10px", fontSize: "15px", fontWeight: 600, cursor: "pointer" }}
-          >
-            Log in →
-          </motion.button>
-        </div>
-      </motion.div>
-    </div>
+    <AuthLayout onBack={onBack}>
+      <div style={{ textAlign: "center", marginBottom: "2rem" }}>
+        <span style={{ fontSize: "2rem" }}>🪐</span>
+        <h2 style={{ fontSize: "22px", fontWeight: 700, color: "#fff", marginTop: "8px" }}>Welcome back</h2>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+        <DarkInput
+          type="email"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          placeholder="your@email.com"
+        />
+        <PrimaryButton
+          onClick={() => email && onSubmit({ name: email.split("@")[0], email })}
+          style={{ padding: "13px", fontSize: "15px" }}
+        >
+          Log in →
+        </PrimaryButton>
+      </div>
+    </AuthLayout>
   );
 }
 
@@ -705,9 +687,7 @@ function PathScreen({ lessons, unlocked, openLesson, title, accentColor = "#6C4D
         ))}
       </div>
 
-      {onBack && (
-        <button onClick={onBack} style={{background:"transparent",border:"1.5px solid #e5e7eb",borderRadius:"10px",padding:"8px 20px",fontSize:"13px",color:"#6b7280",cursor:"pointer",fontWeight:500}}>← Back</button>
-      )}
+      {onBack && <BackButton onClick={onBack} />}
     </div>
   );
 }
@@ -716,109 +696,65 @@ function PathScreen({ lessons, unlocked, openLesson, title, accentColor = "#6C4D
    ESP32 PATH SCREEN (self-contained)
    ============================================================ */
 
-function ESP32PathScreen({ setScreen, onBack }) {
-  const [lessonId, setLessonId] = useState(null);
+const ESP32_LESSONS = [
+  {
+    id: 1,
+    title: "Introduction",
+    pages: [
+      <p>ESP32 is a microcontroller with built-in WiFi + Bluetooth.</p>,
+      <p>It is designed for IoT, robotics, and wireless systems.</p>,
+      <p>Think of it as Arduino's smarter, internet-connected sibling.</p>,
+    ],
+    interactive: <ESP32IntroInteractive />,
+    questions: [
+      { q: "ESP32 is used for…", options: ["Cooking", "WiFi devices", "Drawing"], answer: 1, why: "It enables internet-connected systems." },
+      { q: "ESP32 includes…", options: ["WiFi", "No power", "Only sensors"], answer: 0, why: "WiFi is built in." },
+      { q: "Best use case?", options: ["IoT robots", "Paper writing", "Music only"], answer: 0, why: "It powers smart devices." },
+    ],
+  },
+  {
+    id: 2,
+    title: "How to Use GPIO",
+    pages: [
+      <p>GPIO pins let ESP32 interact with the real world.</p>,
+      <p>They can be inputs (reading sensors) or outputs (controlling devices).</p>,
+      <p>This is how robots sense and react.</p>,
+    ],
+    interactive: <ESP32GPIOInteractive />,
+    questions: [
+      { q: "GPIO means…", options: ["Game Output", "General Purpose Input Output", "Ground Pin Output"], answer: 1, why: "That's the correct meaning." },
+      { q: "Input pins…", options: ["Send data", "Receive data", "Store energy"], answer: 1, why: "They read signals." },
+      { q: "Output pins…", options: ["Control devices", "Store files", "Charge board"], answer: 0, why: "They control hardware." },
+    ],
+  },
+  {
+    id: 3,
+    title: "PWM + Motors",
+    pages: [
+      <p>PWM controls motor speed using rapid ON/OFF switching.</p>,
+      <p>This creates smooth control instead of just ON or OFF.</p>,
+      <p>Used in drones, robots, and RC systems.</p>,
+    ],
+    interactive: <ESP32PWMInteractive />,
+    questions: [
+      { q: "PWM controls…", options: ["Speed", "WiFi", "Memory"], answer: 0, why: "It adjusts power levels." },
+      { q: "PWM works by…", options: ["Analog writing", "Rapid switching", "Bluetooth"], answer: 1, why: "It simulates power." },
+      { q: "Used in…", options: ["Motors", "Only screens", "Passwords"], answer: 0, why: "It controls movement." },
+    ],
+  },
+];
 
-  const esp32Lessons = [
-    {
-      id: 1,
-      title: "Introduction",
-      pages: [
-        <p>ESP32 is a microcontroller with built-in WiFi + Bluetooth.</p>,
-        <p>It is designed for IoT, robotics, and wireless systems.</p>,
-        <p>Think of it as Arduino's smarter, internet-connected sibling.</p>,
-      ],
-      interactive: <ESP32IntroInteractive />,
-      questions: [
-        { q: "ESP32 is used for…", options: ["Cooking", "WiFi devices", "Drawing"], answer: 1, why: "It enables internet-connected systems." },
-        { q: "ESP32 includes…", options: ["WiFi", "No power", "Only sensors"], answer: 0, why: "WiFi is built in." },
-        { q: "Best use case?", options: ["IoT robots", "Paper writing", "Music only"], answer: 0, why: "It powers smart devices." },
-      ],
-    },
-    {
-      id: 2,
-      title: "How to Use GPIO",
-      pages: [
-        <p>GPIO pins let ESP32 interact with the real world.</p>,
-        <p>They can be inputs (reading sensors) or outputs (controlling devices).</p>,
-        <p>This is how robots sense and react.</p>,
-      ],
-      interactive: <ESP32GPIOInteractive />,
-      questions: [
-        { q: "GPIO means…", options: ["Game Output", "General Purpose Input Output", "Ground Pin Output"], answer: 1, why: "That's the correct meaning." },
-        { q: "Input pins…", options: ["Send data", "Receive data", "Store energy"], answer: 1, why: "They read signals." },
-        { q: "Output pins…", options: ["Control devices", "Store files", "Charge board"], answer: 0, why: "They control hardware." },
-      ],
-    },
-    {
-      id: 3,
-      title: "PWM + Motors",
-      pages: [
-        <p>PWM controls motor speed using rapid ON/OFF switching.</p>,
-        <p>This creates smooth control instead of just ON or OFF.</p>,
-        <p>Used in drones, robots, and RC systems.</p>,
-      ],
-      interactive: <ESP32PWMInteractive />,
-      questions: [
-        { q: "PWM controls…", options: ["Speed", "WiFi", "Memory"], answer: 0, why: "It adjusts power levels." },
-        { q: "PWM works by…", options: ["Analog writing", "Rapid switching", "Bluetooth"], answer: 1, why: "It simulates power." },
-        { q: "Used in…", options: ["Motors", "Only screens", "Passwords"], answer: 0, why: "It controls movement." },
-      ],
-    },
-  ];
-
-  const selected = teensyLessons.find((l) => l.id === lessonId);
-
-  if (lessonId !== null) {
-    return (
-      <LessonTemplate
-        title={selected.title}
-        pages={selected.pages}
-        interactive={selected.interactive}
-        questions={selected.questions}
-        accentColor="#F2C94C"
-        darkBg="#1a1a1a"
-        finishLesson={() => setLessonId(null)}
-        goPath={() => setLessonId(null)}
-        goNext={() => setLessonId((id) => Math.min(id + 1, 3))}
-        hasNext={lessonId < 3}
-      />
-    );
-  }
-
+function ESP32PathScreen({ onBack }) {
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-10 py-12">
-      <h1 className="text-4xl font-bold text-black">ESP32 📡</h1>
-
-      <div className="flex flex-col gap-8 items-center">
-        {esp32Lessons.map((lesson, i) => (
-          <div key={lesson.id} className="flex flex-col items-center gap-2">
-            <motion.button
-              onClick={() => setLessonId(lesson.id)}
-              initial={{ opacity: 0, scale: 0.4, y: 30 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ type: "spring", stiffness: 260, damping: 18, delay: i * 0.12 }}
-              whileHover={{ scale: 1.13, boxShadow: "0 8px 32px rgba(242,201,76,0.35)" }}
-              whileTap={{ scale: 0.95 }}
-              className="w-32 h-32 rounded-full shadow-xl text-sm font-bold flex items-center justify-center text-center p-4 border-4"
-              style={{ background: "#111111", color: "#ffffff", borderColor: "#F2C94C", cursor: "pointer" }}
-            >
-              {lesson.title}
-            </motion.button>
-            {i < esp32Lessons.length - 1 && (
-              <motion.div
-                className="w-0.5 bg-gray-200"
-                initial={{ height: 0 }}
-                animate={{ height: 24 }}
-                transition={{ delay: i * 0.12 + 0.1, duration: 0.2 }}
-              />
-            )}
-          </div>
-        ))}
-      </div>
-
-      <button onClick={() => onBack ? onBack() : setScreen("home")} style={{background:"transparent",border:"1.5px solid #e5e7eb",borderRadius:"10px",padding:"8px 20px",fontSize:"13px",color:"#6b7280",cursor:"pointer",fontWeight:500}}>← Back</button>
-    </div>
+    <CoursePathScreen
+      title="ESP32 📡"
+      tag="Intermediate"
+      accentColor="#F2C94C"
+      darkBg="#111111"
+      lessons={ESP32_LESSONS}
+      onBack={onBack}
+      LessonTemplate={LessonTemplate}
+    />
   );
 }
 
@@ -826,130 +762,67 @@ function ESP32PathScreen({ setScreen, onBack }) {
    TEENSY 4.1 PATH SCREEN (self-contained)
    ============================================================ */
 
-function TeensyPathScreen({ setScreen, onBack }) {
-  const [lessonId, setLessonId] = useState(null);
-  const [unlockedTeensy, setUnlockedTeensy] = useState(() =>
-    (() => { try { return parseInt(ls.get("teensy_unlocked") || "1"); } catch { return 1; } })()
-  );
+const TEENSY_LESSONS = [
+  {
+    id: 1,
+    title: "What is Teensy 4.1?",
+    pages: [
+      <p>The Teensy 4.1 runs on the NXP iMXRT1062 — a 600 MHz ARM Cortex-M7 processor. That's roughly <strong>30x faster</strong> than an Arduino Uno.</p>,
+      <p>It packs 8 MB of flash, 1 MB RAM, and an optional MicroSD slot. It can even be expanded with soldered PSRAM chips for up to 16 MB of extra memory.</p>,
+      <p>While Arduino targets simple control and ESP32 targets wireless IoT, Teensy 4.1 is built for real-time DSP, high-speed USB, audio processing, and complex robotics.</p>,
+    ],
+    interactive: <TeensyMemoryInteractive />,
+    questions: [
+      { q: "What processor does Teensy 4.1 use?", options: ["ATmega328P", "ARM Cortex-M7", "Xtensa LX6", "RISC-V"], answer: 1, why: "It uses the NXP iMXRT1062 — an ARM Cortex-M7 running at 600 MHz." },
+      { q: "How does Teensy 4.1 compare in speed to Arduino Uno?", options: ["Same speed", "2x faster", "~30x faster", "Slower"], answer: 2, why: "600 MHz vs ~16 MHz is roughly a 30x clock speed advantage." },
+      { q: "Teensy 4.1 is best suited for...", options: ["Blinking LEDs only", "Simple WiFi sensors", "Real-time audio + complex robotics", "Beginner sketches"], answer: 2, why: "Its speed and DSP hardware make it ideal for audio processing and high-performance robotics." },
+    ],
+  },
+  {
+    id: 2,
+    title: "GPIO Deep Dive",
+    pages: [
+      <p>Teensy 4.1 exposes <strong>55 digital I/O pins</strong> — compare that to Arduino Uno's 14. Most pins support multiple roles: PWM, serial, SPI, I2C, CAN bus, and more.</p>,
+      <p>⚠️ Critical: Teensy 4.1 GPIO operates at <strong>3.3V logic</strong>, not 5V like Arduino Uno. Connecting 5V signals directly can permanently damage the board. Always use a level shifter.</p>,
+      <p>Pin switching on Teensy can happen in <strong>nanoseconds</strong> rather than microseconds. This makes it possible to bit-bang high-speed protocols that would be impossible on slower boards.</p>,
+    ],
+    interactive: <TeensyGPIOInteractive />,
+    questions: [
+      { q: "What voltage does Teensy 4.1 GPIO operate at?", options: ["5V", "3.3V", "1.8V", "12V"], answer: 1, why: "Teensy 4.1 is a 3.3V board. Applying 5V to pins without a level shifter can fry it permanently." },
+      { q: "How many digital I/O pins does Teensy 4.1 have?", options: ["14", "30", "55", "8"], answer: 2, why: "Teensy 4.1 exposes 55 digital I/O pins across its headers." },
+      { q: "To safely connect a 5V Arduino to Teensy, you need a...", options: ["Big resistor", "Level shifter", "Capacitor", "Nothing, it's fine"], answer: 1, why: "A bidirectional level shifter safely converts between 5V and 3.3V logic levels." },
+    ],
+  },
+  {
+    id: 3,
+    title: "PWM & Audio",
+    pages: [
+      <p>Teensy 4.1 supports up to <strong>32 PWM output pins</strong> running at up to 4.6 MHz — compare Arduino Uno's 6 pins at ~490 Hz. This means incredibly precise motor and servo control.</p>,
+      <p>The <strong>Teensy Audio Library</strong> by PJRC lets you route, mix, synthesize, and filter audio in real-time with zero external DSP hardware. Everything runs on-chip.</p>,
+      <p>Audio "objects" chain together like synth nodes: oscillator → filter → mixer → output. The free Audio System Design Tool at pjrc.com lets you design visually and export code instantly.</p>,
+    ],
+    interactive: <TeensyPWMInteractive />,
+    questions: [
+      { q: "How many PWM pins does Teensy 4.1 support?", options: ["6", "12", "32", "4"], answer: 2, why: "Teensy 4.1 can run PWM on up to 32 pins simultaneously — far beyond Arduino's 6." },
+      { q: "What does the Teensy Audio Library do?", options: ["Streams Spotify", "Real-time audio processing on-chip", "Stores audio files", "Downloads samples"], answer: 1, why: "It provides a full real-time audio pipeline — oscillators, filters, mixers — that runs entirely on the Teensy." },
+      { q: "PWM frequency on Teensy 4.1 maxes out at...", options: ["490 Hz", "20 kHz", "~4.6 MHz", "1 GHz"], answer: 2, why: "Teensy 4.1 supports PWM up to ~4.6 MHz — about 10,000x faster than Arduino Uno's default." },
+    ],
+  },
+];
 
-  const teensyLessons = [
-    {
-      id: 1,
-      title: "What is Teensy 4.1?",
-      pages: [
-        <p>The Teensy 4.1 runs on the NXP iMXRT1062 — a 600 MHz ARM Cortex-M7 processor. That's roughly <strong>30x faster</strong> than an Arduino Uno.</p>,
-        <p>It packs 8 MB of flash, 1 MB RAM, and an optional MicroSD slot. It can even be expanded with soldered PSRAM chips for up to 16 MB of extra memory.</p>,
-        <p>While Arduino targets simple control and ESP32 targets wireless IoT, Teensy 4.1 is built for real-time DSP, high-speed USB, audio processing, and complex robotics.</p>,
-      ],
-      interactive: <TeensyMemoryInteractive />,
-      questions: [
-        { q: "What processor does Teensy 4.1 use?", options: ["ATmega328P", "ARM Cortex-M7", "Xtensa LX6", "RISC-V"], answer: 1, why: "It uses the NXP iMXRT1062 — an ARM Cortex-M7 running at 600 MHz." },
-        { q: "How does Teensy 4.1 compare in speed to Arduino Uno?", options: ["Same speed", "2x faster", "~30x faster", "Slower"], answer: 2, why: "600 MHz vs ~16 MHz is roughly a 30x clock speed advantage." },
-        { q: "Teensy 4.1 is best suited for...", options: ["Blinking LEDs only", "Simple WiFi sensors", "Real-time audio + complex robotics", "Beginner sketches"], answer: 2, why: "Its speed and DSP hardware make it ideal for audio processing and high-performance robotics." },
-      ],
-    },
-    {
-      id: 2,
-      title: "GPIO Deep Dive",
-      pages: [
-        <p>Teensy 4.1 exposes <strong>55 digital I/O pins</strong> — compare that to Arduino Uno's 14. Most pins support multiple roles: PWM, serial, SPI, I2C, CAN bus, and more.</p>,
-        <p>⚠️ Critical: Teensy 4.1 GPIO operates at <strong>3.3V logic</strong>, not 5V like Arduino Uno. Connecting 5V signals directly can permanently damage the board. Always use a level shifter.</p>,
-        <p>Pin switching on Teensy can happen in <strong>nanoseconds</strong> rather than microseconds. This makes it possible to bit-bang high-speed protocols that would be impossible on slower boards.</p>,
-      ],
-      interactive: <TeensyGPIOInteractive />,
-      questions: [
-        { q: "What voltage does Teensy 4.1 GPIO operate at?", options: ["5V", "3.3V", "1.8V", "12V"], answer: 1, why: "Teensy 4.1 is a 3.3V board. Applying 5V to pins without a level shifter can fry it permanently." },
-        { q: "How many digital I/O pins does Teensy 4.1 have?", options: ["14", "30", "55", "8"], answer: 2, why: "Teensy 4.1 exposes 55 digital I/O pins across its headers." },
-        { q: "To safely connect a 5V Arduino to Teensy, you need a...", options: ["Big resistor", "Level shifter", "Capacitor", "Nothing, it's fine"], answer: 1, why: "A bidirectional level shifter safely converts between 5V and 3.3V logic levels." },
-      ],
-    },
-    {
-      id: 3,
-      title: "PWM & Audio",
-      pages: [
-        <p>Teensy 4.1 supports up to <strong>32 PWM output pins</strong> running at up to 4.6 MHz — compare Arduino Uno's 6 pins at ~490 Hz. This means incredibly precise motor and servo control.</p>,
-        <p>The <strong>Teensy Audio Library</strong> by PJRC lets you route, mix, synthesize, and filter audio in real-time with zero external DSP hardware. Everything runs on-chip.</p>,
-        <p>Audio "objects" chain together like synth nodes: oscillator → filter → mixer → output. The free Audio System Design Tool at pjrc.com lets you design visually and export code instantly.</p>,
-      ],
-      interactive: <TeensyPWMInteractive />,
-      questions: [
-        { q: "How many PWM pins does Teensy 4.1 support?", options: ["6", "12", "32", "4"], answer: 2, why: "Teensy 4.1 can run PWM on up to 32 pins simultaneously — far beyond Arduino's 6." },
-        { q: "What does the Teensy Audio Library do?", options: ["Streams Spotify", "Real-time audio processing on-chip", "Stores audio files", "Downloads samples"], answer: 1, why: "It provides a full real-time audio pipeline — oscillators, filters, mixers — that runs entirely on the Teensy." },
-        { q: "PWM frequency on Teensy 4.1 maxes out at...", options: ["490 Hz", "20 kHz", "~4.6 MHz", "1 GHz"], answer: 2, why: "Teensy 4.1 supports PWM up to ~4.6 MHz — about 10,000x faster than Arduino Uno's default." },
-      ],
-    },
-  ];
-
-  const selected = teensyLessons.find((l) => l.id === lessonId);
-
-  if (lessonId !== null) {
-    return (
-      <LessonTemplate
-        title={selected.title}
-        pages={selected.pages}
-        interactive={selected.interactive}
-        questions={selected.questions}
-        accentColor="#E0AA3E"
-        darkBg="#1A1A2E"
-        finishLesson={() => {
-          if (lessonId === unlockedTeensy) {
-            const next = unlockedTeensy + 1;
-            setUnlockedTeensy(next);
-            ls.set("teensy_unlocked", next);
-          }
-          setLessonId(null);
-        }}
-        goPath={() => setLessonId(null)}
-        goNext={() => setLessonId((id) => Math.min(id + 1, teensyLessons.length))}
-        hasNext={lessonId < teensyLessons.length}
-      />
-    );
-  }
-
+function TeensyPathScreen({ onBack }) {
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-10 py-12">
-      <div className="text-center">
-        <span className="text-xs font-bold tracking-widest text-[#E0AA3E] uppercase">Advanced</span>
-        <h1 className="text-4xl font-bold text-black mt-1">Teensy 4.1 ⚡</h1>
-        <p className="text-gray-500 text-sm mt-1">600 MHz. Real-time. No more training wheels.</p>
-      </div>
-
-      <div className="flex flex-col gap-8 items-center">
-        {teensyLessons.map((lesson, i) => {
-          const locked = lesson.id > unlockedTeensy;
-          return (
-            <div key={lesson.id} className="flex flex-col items-center gap-2">
-              <motion.button
-                onClick={() => !locked && setLessonId(lesson.id)}
-                initial={{ opacity: 0, scale: 0.4, y: 30 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                transition={{ type: "spring", stiffness: 260, damping: 18, delay: i * 0.12 }}
-                whileHover={!locked ? { scale: 1.13, boxShadow: "0 8px 32px rgba(224,170,62,0.35)" } : {}}
-                whileTap={!locked ? { scale: 0.95 } : {}}
-                className="w-32 h-32 rounded-full shadow-xl text-sm font-bold flex items-center justify-center text-center p-4 border-4"
-                style={locked
-                  ? { background: "#e5e7eb", color: "#9ca3af", borderColor: "#d1d5db", cursor: "default" }
-                  : { background: "#1A1A2E", color: "#ffffff", borderColor: "#E0AA3E", cursor: "pointer" }
-                }
-              >
-                {locked && <span className="text-lg mr-1">🔒</span>}
-                {lesson.title}
-              </motion.button>
-              {i < teensyLessons.length - 1 && (
-                <motion.div
-                  className="w-0.5 bg-gray-200"
-                  initial={{ height: 0 }}
-                  animate={{ height: 24 }}
-                  transition={{ delay: i * 0.12 + 0.1, duration: 0.2 }}
-                />
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      <button onClick={() => onBack ? onBack() : setScreen("home")} style={{background:"transparent",border:"1.5px solid #e5e7eb",borderRadius:"10px",padding:"8px 20px",fontSize:"13px",color:"#6b7280",cursor:"pointer",fontWeight:500}}>← Back</button>
-    </div>
+    <CoursePathScreen
+      title="Teensy 4.1 ⚡"
+      subtitle="600 MHz. Real-time. No more training wheels."
+      tag="Advanced"
+      accentColor="#E0AA3E"
+      darkBg="#1A1A2E"
+      lessons={TEENSY_LESSONS}
+      storageKey="teensy_unlocked"
+      onBack={onBack}
+      LessonTemplate={LessonTemplate}
+    />
   );
 }
 
@@ -1410,189 +1283,127 @@ function WiresInteractive() {
    MOTORS & ACTUATORS PATH SCREEN
    ============================================================ */
 
-function MotorsPathScreen({ setScreen, onBack }) {
-  const [lessonId, setLessonId] = useState(null);
-  const [unlockedMotors, setUnlockedMotors] = useState(() =>
-    (() => { try { return parseInt(ls.get("motors_unlocked") || "1"); } catch { return 1; } })()
-  );
+const MOTORS_ACCENT = "#2ECC71";
+const MOTORS_DARK = "#0F4C35";
 
-  const ACCENT = "#2ECC71";
-  const DARK   = "#0F4C35";
+const MOTORS_LESSONS = [
+  {
+    id: 1,
+    title: "Meet the Servo",
+    pages: [
+      <p>A <strong>servo motor</strong> is a motor with a built-in gearbox and a feedback sensor that lets you control its position precisely. Instead of spinning freely, it moves to a specific angle and holds there.</p>,
+      <p>Most hobby servos rotate between <strong>0° and 180°</strong>. You command the angle by sending a PWM signal — typically a pulse between 1ms (0°) and 2ms (180°) repeated every 20ms.</p>,
+      <p>On Arduino, the <code>Servo</code> library handles all the timing for you. Just call <code>myServo.attach(9)</code> to connect it to pin 9, then <code>myServo.write(90)</code> to move it to 90 degrees.</p>,
+      <p>Servos have <strong>3 wires</strong>: red (5V power), brown/black (GND), and orange/yellow/white (signal). The signal wire is what carries the PWM angle command from your Arduino.</p>,
+    ],
+    interactive: <ServoAngleInteractive accentColor={MOTORS_ACCENT} darkBg={MOTORS_DARK} />,
+    questions: [
+      { q: "What does a servo motor control?", options: ["Speed only", "Position/angle precisely", "Voltage output", "WiFi signal"], answer: 1, why: "Servos use internal feedback to hold a precise angle — that's what makes them different from regular motors." },
+      { q: "What signal does Arduino send to control a servo?", options: ["Analog voltage", "I2C data", "PWM pulse", "Serial text"], answer: 2, why: "A PWM pulse width between 1ms and 2ms tells the servo which angle to move to." },
+      { q: "Which Arduino library controls servos?", options: ["Wire.h", "Servo.h", "Motor.h", "PWM.h"], answer: 1, why: "The built-in Servo library handles all PWM timing so you just call myServo.write(angle)." },
+      { q: "How many wires does a hobby servo have?", options: ["2", "4", "3", "6"], answer: 2, why: "Power (red), ground (black/brown), and signal (orange/white/yellow)." },
+    ],
+  },
+  {
+    id: 2,
+    title: "Servo in Action",
+    pages: [
+      <p>Your first real servo project: a <strong>door lock mechanism</strong>. The servo arm rotates to 0° to lock and 180° to unlock — simple, reliable, and a real-world use case.</p>,
+      <p>The wiring is minimal: servo signal → pin 9, a push button → pin 2. When the button is pressed, the Arduino toggles the servo between locked and unlocked positions.</p>,
+      <p><strong>Important:</strong> servos draw more current than an Arduino pin can safely supply. Always power the servo's red wire from the Arduino's 5V pin (or an external supply for larger servos), not from a GPIO pin.</p>,
+      <p>For smoother movement, use <code>myServo.write()</code> inside a <code>for</code> loop with a small delay — sweeping from current angle to target angle one degree at a time instead of snapping instantly.</p>,
+    ],
+    interactive: <LockInteractive accentColor={MOTORS_ACCENT} darkBg={MOTORS_DARK} />,
+    questions: [
+      { q: "Why shouldn't you power a servo from a GPIO pin?", options: ["It's too slow", "GPIO pins can't supply enough current", "It changes the signal", "It drains the battery faster"], answer: 1, why: "GPIO pins are limited to ~40mA. Servos can draw 500mA+, which would damage the microcontroller." },
+      { q: "How do you make a servo move smoothly instead of snapping?", options: ["Use faster code", "Sweep angle in a loop with delays", "Use a different library", "Increase voltage"], answer: 1, why: "Incrementing the angle one degree at a time with a small delay creates smooth, controlled movement." },
+      { q: "In a door lock project, what triggers the servo?", options: ["Always on", "A push button input", "WiFi command", "Sensor only"], answer: 1, why: "A push button on a digital input pin tells the Arduino to toggle the servo position." },
+      { q: "What range does a standard hobby servo cover?", options: ["0–90°", "0–360°", "0–180°", "45–135°"], answer: 2, why: "Standard hobby servos rotate between 0° and 180°. Continuous rotation servos are a different type." },
+    ],
+  },
+  {
+    id: 3,
+    title: "What Are Actuators?",
+    pages: [
+      <p>An <strong>actuator</strong> is any device that converts energy into physical motion. A servo is one type of actuator — but the family is much bigger: solenoids, linear actuators, pneumatic cylinders, hydraulic rams, and more.</p>,
+      <p>The key difference: a servo is a <em>smart</em> actuator — it has feedback and knows its position. Most other actuators are <em>dumb</em> — they just push or pull when powered, with no built-in position awareness.</p>,
+      <p>In robotics, actuators are the "muscles" of your machine. Sensors tell the robot what's happening; the microcontroller decides what to do; actuators make it happen in the physical world.</p>,
+      <p>Choosing the right actuator means matching <strong>force, speed, stroke length, and control precision</strong> to your application. A servo door lock needs precision. A pneumatic press needs raw force. A solenoid valve just needs on/off.</p>,
+    ],
+    interactive: <ActuatorCompareInteractive accentColor={MOTORS_ACCENT} darkBg={MOTORS_DARK} />,
+    questions: [
+      { q: "What does an actuator do?", options: ["Measures temperature", "Converts energy to physical motion", "Stores data", "Amplifies signals"], answer: 1, why: "Actuators are the 'output' side of a robotic system — they create movement in the real world." },
+      { q: "What makes a servo different from most actuators?", options: ["It's louder", "It has built-in position feedback", "It uses more power", "It's wireless"], answer: 1, why: "A servo has an internal sensor that tells it its current position. Most actuators just move when powered." },
+      { q: "In robotics, actuators are the machine's...", options: ["Brain", "Eyes", "Muscles", "Memory"], answer: 2, why: "Sensors are the eyes, the microcontroller is the brain, and actuators are the muscles that create motion." },
+      { q: "Which factor matters LEAST when picking an actuator?", options: ["Force output", "Color", "Speed", "Precision"], answer: 1, why: "Color has zero bearing on actuator selection. Force, speed, stroke, and precision all matter." },
+    ],
+  },
+  {
+    id: 4,
+    title: "Types of Actuators",
+    pages: [
+      <p><strong>Linear actuators</strong> push and pull in a straight line. Electric versions use a motor + leadscrew. They're used in adjustable desks, robotic arms, and CNC machines. Stroke length (how far it extends) is the key spec.</p>,
+      <p><strong>Rotary actuators</strong> produce rotation — motors, servos, and pneumatic rotary actuators fall here. They're measured in torque (Nm) and RPM. Most joints in robot arms use rotary actuators.</p>,
+      <p><strong>Solenoids</strong> are the simplest actuators — a coil of wire that creates a magnetic field when powered, pulling an iron plunger. They're either fully in or fully out. Used in door locks, pinball machines, and injection systems.</p>,
+      <p><strong>Pneumatic and hydraulic actuators</strong> use compressed air or fluid pressure to generate massive force from a small controller signal. Pneumatics are fast and clean; hydraulics move heavier loads. Industrial robots and heavy equipment use these.</p>,
+    ],
+    interactive: <ActuatorTypesInteractive accentColor={MOTORS_ACCENT} darkBg={MOTORS_DARK} />,
+    questions: [
+      { q: "A linear actuator moves...", options: ["In a circle", "In a straight line", "Randomly", "Only backwards"], answer: 1, why: "Linear actuators produce straight-line push/pull motion, unlike rotary actuators which spin." },
+      { q: "What is a solenoid's movement like?", options: ["Smooth and variable", "Only fully in or fully out", "360° rotation", "Spiral"], answer: 1, why: "Solenoids are binary — the plunger is either fully retracted or fully extended. No middle position." },
+      { q: "Which actuator type generates the most raw force?", options: ["Solenoid", "Servo", "Hydraulic", "Stepper motor"], answer: 2, why: "Hydraulic actuators can generate enormous force using pressurized fluid — far beyond electrical actuators." },
+      { q: "Pneumatic actuators use...", options: ["Electric current", "Compressed air", "Hydraulic fluid", "Magnets"], answer: 1, why: "Pneumatics use compressed air to drive pistons. Fast, clean, and widely used in industrial automation." },
+    ],
+  },
+  {
+    id: 5,
+    title: "DC & Stepper Motors",
+    pages: [
+      <p>A <strong>DC motor</strong> spins continuously when voltage is applied. Speed is controlled by PWM (varying the average voltage), and direction is controlled by reversing polarity — which is why you need an <strong>H-bridge</strong> like the L298N chip to drive one from Arduino.</p>,
+      <p>DC motors are fast and simple but have no position feedback. If you need to know where the motor shaft is, you add an <strong>encoder</strong> — a sensor that counts rotations. DC motors with encoders power most wheeled robots.</p>,
+      <p>A <strong>stepper motor</strong> moves in precise discrete steps — typically 1.8° per step (200 steps = one full rotation). It does this by energizing coils in sequence. No encoder needed — each step is guaranteed, making steppers perfect for 3D printers and CNC machines.</p>,
+      <p>The trade-off: steppers are <strong>slower and less power-efficient</strong> than DC motors, and they can "miss steps" under heavy load. DC motors are faster and stronger but need encoders for precision. Choose based on whether you need speed or exact position.</p>,
+    ],
+    interactive: <MotorCompareInteractive accentColor={MOTORS_ACCENT} darkBg={MOTORS_DARK} />,
+    questions: [
+      { q: "How do you control a DC motor's direction?", options: ["Change PWM frequency", "Reverse polarity via H-bridge", "Adjust voltage only", "Use I2C commands"], answer: 1, why: "An H-bridge circuit (like L298N) lets you reverse current flow through the motor to change direction." },
+      { q: "How many degrees does a stepper motor move per step (typically)?", options: ["0.9°", "5°", "1.8°", "45°"], answer: 2, why: "Standard stepper motors move 1.8° per step, giving 200 steps per full revolution." },
+      { q: "What does an encoder do on a DC motor?", options: ["Changes speed", "Provides position feedback", "Reduces noise", "Steps the voltage"], answer: 1, why: "An encoder counts shaft rotations so the controller knows exactly where the motor is — giving position awareness to a motor that otherwise has none." },
+      { q: "Why are steppers used in 3D printers?", options: ["They're cheaper", "They're faster", "Each step is a guaranteed precise movement", "They run on AC power"], answer: 2, why: "Steppers move a guaranteed 1.8° per step with no encoder needed — perfect for the precise X/Y/Z positioning a 3D printer requires." },
+    ],
+  },
+  {
+    id: 6,
+    title: "Your First Project",
+    pages: [
+      <p>Project: <strong>Automated Sorting Arm</strong>. A servo rotates a small arm left or right, a DC motor drives a conveyor belt, and a button triggers the sort. This ties together everything from the last 5 lessons.</p>,
+      <p>The difference from your servo door lock: here the servo works <em>together</em> with a DC motor. The sequence matters — belt runs, object arrives, belt stops, arm sorts, arm resets, belt runs again. This is called a <strong>state machine</strong>.</p>,
+      <p>Actuators vs Servos in one sentence: <strong>servos know where they are</strong> (position feedback), while most actuators like solenoids and linear actuators just move when told. In this project, the servo is the precise sorter; the DC motor is the dumb-but-fast belt driver.</p>,
+      <p>Next steps: add a sensor (IR or ultrasonic) to detect when an object is present instead of using a button. That transforms this from a manually-triggered device into a <strong>fully autonomous sorting system</strong>.</p>,
+    ],
+    interactive: <SortingArmInteractive accentColor={MOTORS_ACCENT} darkBg={MOTORS_DARK} />,
+    questions: [
+      { q: "What is a state machine in robotics?", options: ["A machine made of metal", "A sequence of steps where each action depends on the current state", "A stepper motor controller", "A type of sensor"], answer: 1, why: "State machines define what happens next based on the current condition — e.g. 'if belt is running and object detected, stop belt and sort.'" },
+      { q: "What's the key difference between a servo and a solenoid?", options: ["Servos are louder", "Servos have position feedback; solenoids are binary on/off", "Solenoids are more expensive", "Servos use AC power"], answer: 1, why: "A servo knows its exact angle. A solenoid is simply in or out — no middle ground, no position feedback." },
+      { q: "What sensor would make the sorting arm autonomous?", options: ["Temperature sensor", "IR or ultrasonic distance sensor", "Gyroscope", "Barometer"], answer: 1, why: "An IR or ultrasonic sensor detects when an object is present, replacing the manual button trigger." },
+      { q: "In the sorting arm project, what role does the DC motor play?", options: ["Precise angle positioning", "Driving the conveyor belt", "Reading sensor data", "Controlling the servo"], answer: 1, why: "The DC motor drives the belt — it doesn't need precision, just continuous rotation at a set speed." },
+    ],
+  },
+];
 
-  const motorsLessons = [
-    {
-      id: 1,
-      title: "Meet the Servo",
-      pages: [
-        <p>A <strong>servo motor</strong> is a motor with a built-in gearbox and a feedback sensor that lets you control its position precisely. Instead of spinning freely, it moves to a specific angle and holds there.</p>,
-        <p>Most hobby servos rotate between <strong>0° and 180°</strong>. You command the angle by sending a PWM signal — typically a pulse between 1ms (0°) and 2ms (180°) repeated every 20ms.</p>,
-        <p>On Arduino, the <code>Servo</code> library handles all the timing for you. Just call <code>myServo.attach(9)</code> to connect it to pin 9, then <code>myServo.write(90)</code> to move it to 90 degrees.</p>,
-        <p>Servos have <strong>3 wires</strong>: red (5V power), brown/black (GND), and orange/yellow/white (signal). The signal wire is what carries the PWM angle command from your Arduino.</p>,
-      ],
-      interactive: <ServoAngleInteractive accentColor={ACCENT} darkBg={DARK} />,
-      questions: [
-        { q: "What does a servo motor control?", options: ["Speed only", "Position/angle precisely", "Voltage output", "WiFi signal"], answer: 1, why: "Servos use internal feedback to hold a precise angle — that's what makes them different from regular motors." },
-        { q: "What signal does Arduino send to control a servo?", options: ["Analog voltage", "I2C data", "PWM pulse", "Serial text"], answer: 2, why: "A PWM pulse width between 1ms and 2ms tells the servo which angle to move to." },
-        { q: "Which Arduino library controls servos?", options: ["Wire.h", "Servo.h", "Motor.h", "PWM.h"], answer: 1, why: "The built-in Servo library handles all PWM timing so you just call myServo.write(angle)." },
-        { q: "How many wires does a hobby servo have?", options: ["2", "4", "3", "6"], answer: 2, why: "Power (red), ground (black/brown), and signal (orange/white/yellow)." },
-      ],
-    },
-    {
-      id: 2,
-      title: "Servo in Action",
-      pages: [
-        <p>Your first real servo project: a <strong>door lock mechanism</strong>. The servo arm rotates to 0° to lock and 180° to unlock — simple, reliable, and a real-world use case.</p>,
-        <p>The wiring is minimal: servo signal → pin 9, a push button → pin 2. When the button is pressed, the Arduino toggles the servo between locked and unlocked positions.</p>,
-        <p><strong>Important:</strong> servos draw more current than an Arduino pin can safely supply. Always power the servo's red wire from the Arduino's 5V pin (or an external supply for larger servos), not from a GPIO pin.</p>,
-        <p>For smoother movement, use <code>myServo.write()</code> inside a <code>for</code> loop with a small delay — sweeping from current angle to target angle one degree at a time instead of snapping instantly.</p>,
-      ],
-      interactive: <LockInteractive accentColor={ACCENT} darkBg={DARK} />,
-      questions: [
-        { q: "Why shouldn't you power a servo from a GPIO pin?", options: ["It's too slow", "GPIO pins can't supply enough current", "It changes the signal", "It drains the battery faster"], answer: 1, why: "GPIO pins are limited to ~40mA. Servos can draw 500mA+, which would damage the microcontroller." },
-        { q: "How do you make a servo move smoothly instead of snapping?", options: ["Use faster code", "Sweep angle in a loop with delays", "Use a different library", "Increase voltage"], answer: 1, why: "Incrementing the angle one degree at a time with a small delay creates smooth, controlled movement." },
-        { q: "In a door lock project, what triggers the servo?", options: ["Always on", "A push button input", "WiFi command", "Sensor only"], answer: 1, why: "A push button on a digital input pin tells the Arduino to toggle the servo position." },
-        { q: "What range does a standard hobby servo cover?", options: ["0–90°", "0–360°", "0–180°", "45–135°"], answer: 2, why: "Standard hobby servos rotate between 0° and 180°. Continuous rotation servos are a different type." },
-      ],
-    },
-    {
-      id: 3,
-      title: "What Are Actuators?",
-      pages: [
-        <p>An <strong>actuator</strong> is any device that converts energy into physical motion. A servo is one type of actuator — but the family is much bigger: solenoids, linear actuators, pneumatic cylinders, hydraulic rams, and more.</p>,
-        <p>The key difference: a servo is a <em>smart</em> actuator — it has feedback and knows its position. Most other actuators are <em>dumb</em> — they just push or pull when powered, with no built-in position awareness.</p>,
-        <p>In robotics, actuators are the "muscles" of your machine. Sensors tell the robot what's happening; the microcontroller decides what to do; actuators make it happen in the physical world.</p>,
-        <p>Choosing the right actuator means matching <strong>force, speed, stroke length, and control precision</strong> to your application. A servo door lock needs precision. A pneumatic press needs raw force. A solenoid valve just needs on/off.</p>,
-      ],
-      interactive: <ActuatorCompareInteractive accentColor={ACCENT} darkBg={DARK} />,
-      questions: [
-        { q: "What does an actuator do?", options: ["Measures temperature", "Converts energy to physical motion", "Stores data", "Amplifies signals"], answer: 1, why: "Actuators are the 'output' side of a robotic system — they create movement in the real world." },
-        { q: "What makes a servo different from most actuators?", options: ["It's louder", "It has built-in position feedback", "It uses more power", "It's wireless"], answer: 1, why: "A servo has an internal sensor that tells it its current position. Most actuators just move when powered." },
-        { q: "In robotics, actuators are the machine's...", options: ["Brain", "Eyes", "Muscles", "Memory"], answer: 2, why: "Sensors are the eyes, the microcontroller is the brain, and actuators are the muscles that create motion." },
-        { q: "Which factor matters LEAST when picking an actuator?", options: ["Force output", "Color", "Speed", "Precision"], answer: 1, why: "Color has zero bearing on actuator selection. Force, speed, stroke, and precision all matter." },
-      ],
-    },
-    {
-      id: 4,
-      title: "Types of Actuators",
-      pages: [
-        <p><strong>Linear actuators</strong> push and pull in a straight line. Electric versions use a motor + leadscrew. They're used in adjustable desks, robotic arms, and CNC machines. Stroke length (how far it extends) is the key spec.</p>,
-        <p><strong>Rotary actuators</strong> produce rotation — motors, servos, and pneumatic rotary actuators fall here. They're measured in torque (Nm) and RPM. Most joints in robot arms use rotary actuators.</p>,
-        <p><strong>Solenoids</strong> are the simplest actuators — a coil of wire that creates a magnetic field when powered, pulling an iron plunger. They're either fully in or fully out. Used in door locks, pinball machines, and injection systems.</p>,
-        <p><strong>Pneumatic and hydraulic actuators</strong> use compressed air or fluid pressure to generate massive force from a small controller signal. Pneumatics are fast and clean; hydraulics move heavier loads. Industrial robots and heavy equipment use these.</p>,
-      ],
-      interactive: <ActuatorTypesInteractive accentColor={ACCENT} darkBg={DARK} />,
-      questions: [
-        { q: "A linear actuator moves...", options: ["In a circle", "In a straight line", "Randomly", "Only backwards"], answer: 1, why: "Linear actuators produce straight-line push/pull motion, unlike rotary actuators which spin." },
-        { q: "What is a solenoid's movement like?", options: ["Smooth and variable", "Only fully in or fully out", "360° rotation", "Spiral"], answer: 1, why: "Solenoids are binary — the plunger is either fully retracted or fully extended. No middle position." },
-        { q: "Which actuator type generates the most raw force?", options: ["Solenoid", "Servo", "Hydraulic", "Stepper motor"], answer: 2, why: "Hydraulic actuators can generate enormous force using pressurized fluid — far beyond electrical actuators." },
-        { q: "Pneumatic actuators use...", options: ["Electric current", "Compressed air", "Hydraulic fluid", "Magnets"], answer: 1, why: "Pneumatics use compressed air to drive pistons. Fast, clean, and widely used in industrial automation." },
-      ],
-    },
-    {
-      id: 5,
-      title: "DC & Stepper Motors",
-      pages: [
-        <p>A <strong>DC motor</strong> spins continuously when voltage is applied. Speed is controlled by PWM (varying the average voltage), and direction is controlled by reversing polarity — which is why you need an <strong>H-bridge</strong> like the L298N chip to drive one from Arduino.</p>,
-        <p>DC motors are fast and simple but have no position feedback. If you need to know where the motor shaft is, you add an <strong>encoder</strong> — a sensor that counts rotations. DC motors with encoders power most wheeled robots.</p>,
-        <p>A <strong>stepper motor</strong> moves in precise discrete steps — typically 1.8° per step (200 steps = one full rotation). It does this by energizing coils in sequence. No encoder needed — each step is guaranteed, making steppers perfect for 3D printers and CNC machines.</p>,
-        <p>The trade-off: steppers are <strong>slower and less power-efficient</strong> than DC motors, and they can "miss steps" under heavy load. DC motors are faster and stronger but need encoders for precision. Choose based on whether you need speed or exact position.</p>,
-      ],
-      interactive: <MotorCompareInteractive accentColor={ACCENT} darkBg={DARK} />,
-      questions: [
-        { q: "How do you control a DC motor's direction?", options: ["Change PWM frequency", "Reverse polarity via H-bridge", "Adjust voltage only", "Use I2C commands"], answer: 1, why: "An H-bridge circuit (like L298N) lets you reverse current flow through the motor to change direction." },
-        { q: "How many degrees does a stepper motor move per step (typically)?", options: ["0.9°", "5°", "1.8°", "45°"], answer: 2, why: "Standard stepper motors move 1.8° per step, giving 200 steps per full revolution." },
-        { q: "What does an encoder do on a DC motor?", options: ["Changes speed", "Provides position feedback", "Reduces noise", "Steps the voltage"], answer: 1, why: "An encoder counts shaft rotations so the controller knows exactly where the motor is — giving position awareness to a motor that otherwise has none." },
-        { q: "Why are steppers used in 3D printers?", options: ["They're cheaper", "They're faster", "Each step is a guaranteed precise movement", "They run on AC power"], answer: 2, why: "Steppers move a guaranteed 1.8° per step with no encoder needed — perfect for the precise X/Y/Z positioning a 3D printer requires." },
-      ],
-    },
-    {
-      id: 6,
-      title: "Your First Project",
-      pages: [
-        <p>Project: <strong>Automated Sorting Arm</strong>. A servo rotates a small arm left or right, a DC motor drives a conveyor belt, and a button triggers the sort. This ties together everything from the last 5 lessons.</p>,
-        <p>The difference from your servo door lock: here the servo works <em>together</em> with a DC motor. The sequence matters — belt runs, object arrives, belt stops, arm sorts, arm resets, belt runs again. This is called a <strong>state machine</strong>.</p>,
-        <p>Actuators vs Servos in one sentence: <strong>servos know where they are</strong> (position feedback), while most actuators like solenoids and linear actuators just move when told. In this project, the servo is the precise sorter; the DC motor is the dumb-but-fast belt driver.</p>,
-        <p>Next steps: add a sensor (IR or ultrasonic) to detect when an object is present instead of using a button. That transforms this from a manually-triggered device into a <strong>fully autonomous sorting system</strong>.</p>,
-      ],
-      interactive: <SortingArmInteractive accentColor={ACCENT} darkBg={DARK} />,
-      questions: [
-        { q: "What is a state machine in robotics?", options: ["A machine made of metal", "A sequence of steps where each action depends on the current state", "A stepper motor controller", "A type of sensor"], answer: 1, why: "State machines define what happens next based on the current condition — e.g. 'if belt is running and object detected, stop belt and sort.'" },
-        { q: "What's the key difference between a servo and a solenoid?", options: ["Servos are louder", "Servos have position feedback; solenoids are binary on/off", "Solenoids are more expensive", "Servos use AC power"], answer: 1, why: "A servo knows its exact angle. A solenoid is simply in or out — no middle ground, no position feedback." },
-        { q: "What sensor would make the sorting arm autonomous?", options: ["Temperature sensor", "IR or ultrasonic distance sensor", "Gyroscope", "Barometer"], answer: 1, why: "An IR or ultrasonic sensor detects when an object is present, replacing the manual button trigger." },
-        { q: "In the sorting arm project, what role does the DC motor play?", options: ["Precise angle positioning", "Driving the conveyor belt", "Reading sensor data", "Controlling the servo"], answer: 1, why: "The DC motor drives the belt — it doesn't need precision, just continuous rotation at a set speed." },
-      ],
-    },
-  ];
-
-  const selected = motorsLessons.find((l) => l.id === lessonId);
-
-  if (lessonId !== null) {
-    return (
-      <LessonTemplate
-        title={selected.title}
-        pages={selected.pages}
-        interactive={selected.interactive}
-        questions={selected.questions}
-        accentColor={ACCENT}
-        darkBg={DARK}
-        finishLesson={() => {
-          if (lessonId === unlockedMotors) {
-            const next = unlockedMotors + 1;
-            setUnlockedMotors(next);
-            ls.set("motors_unlocked", next);
-          }
-          setLessonId(null);
-        }}
-        goPath={() => setLessonId(null)}
-        goNext={() => setLessonId((id) => Math.min(id + 1, motorsLessons.length))}
-        hasNext={lessonId < motorsLessons.length}
-      />
-    );
-  }
-
+function MotorsPathScreen({ onBack }) {
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-10 py-12 px-4">
-      <div className="text-center">
-        <span className="text-xs font-bold tracking-widest uppercase" style={{ color: ACCENT }}>Hands-On</span>
-        <h1 className="text-4xl font-bold text-black mt-1">Motors & Actuators ⚙️</h1>
-        <p className="text-gray-500 text-sm mt-1">Make things move in the real world.</p>
-      </div>
-
-      <div className="flex flex-col gap-8 items-center">
-        {motorsLessons.map((lesson, i) => {
-          const locked = lesson.id > unlockedMotors;
-          return (
-            <div key={lesson.id} className="flex flex-col items-center gap-2">
-              <motion.button
-                onClick={() => !locked && setLessonId(lesson.id)}
-                initial={{ opacity: 0, scale: 0.4, y: 30 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                transition={{ type: "spring", stiffness: 260, damping: 18, delay: i * 0.1 }}
-                whileHover={!locked ? { scale: 1.13, boxShadow: "0 8px 32px rgba(46,204,113,0.35)" } : {}}
-                whileTap={!locked ? { scale: 0.95 } : {}}
-                className="w-32 h-32 rounded-full shadow-xl text-sm font-bold flex items-center justify-center text-center p-4 border-4"
-                style={locked
-                  ? { background: "#e5e7eb", color: "#9ca3af", borderColor: "#d1d5db", cursor: "default" }
-                  : { background: DARK, color: "#ffffff", borderColor: ACCENT, cursor: "pointer" }
-                }
-              >
-                {locked && <span style={{ fontSize: "1.1rem", display: "block", marginBottom: "4px" }}>🔒</span>}
-                <span style={{ color: locked ? "#9ca3af" : "#ffffff", fontSize: "11px", lineHeight: 1.3 }}>{lesson.title}</span>
-              </motion.button>
-              {i < motorsLessons.length - 1 && (
-                <motion.div
-                  className="w-0.5 bg-gray-200"
-                  initial={{ height: 0 }}
-                  animate={{ height: 24 }}
-                  transition={{ delay: i * 0.1 + 0.1, duration: 0.2 }}
-                />
-              )}
-            </div>
-          );
-        })}
-      </div>
-      <button onClick={() => onBack ? onBack() : setScreen("home")} style={{background:"transparent",border:"1.5px solid #e5e7eb",borderRadius:"10px",padding:"8px 20px",fontSize:"13px",color:"#6b7280",cursor:"pointer",fontWeight:500}}>← Back</button>
-    </div>
+    <CoursePathScreen
+      title="Motors & Actuators ⚙️"
+      subtitle="Make things move in the real world."
+      tag="Hands-On"
+      accentColor={MOTORS_ACCENT}
+      darkBg={MOTORS_DARK}
+      lessons={MOTORS_LESSONS}
+      storageKey="motors_unlocked"
+      onBack={onBack}
+      LessonTemplate={LessonTemplate}
+    />
   );
 }
 
